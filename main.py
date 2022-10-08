@@ -3,7 +3,12 @@ import numpy as np
 import pyodbc
 import streamlit as st
 
+
 st.title("Add Student Databases")
+driver = 'SQL Server'
+
+c1 = st.container()
+c2 = st.container()
 
 if "button_clicked" not in st.session_state:
     st.session_state.button_clicked = False
@@ -15,58 +20,75 @@ def callback():
 
 
 # get the csv file from the user; get the student names from the csv file
-st.write("You can get the Class Roster csv file by going to Canvas Course -> People -> Download Course Roster")
-#class_roster = st.file_uploader("Upload the course roster csv file:")
+# class_roster = st.file_uploader("Upload the course roster csv file:")
 
 # create a form
-with st.form("my_form"):
+with c1.form("my_form"):
     # get user parameters parameters to connect to SQL Server
-    class_roster = st.file_uploader("Upload the course roster csv file:")
+    st.write("You can get the Class Roster csv file by going to Canvas Course -> People -> Download Course Roster.")
+    class_roster = st.file_uploader(
+        "Upload the course roster csv file:")
     st.write("Enter admin login information here:")
     server = st.text_input("Enter the server name:")
-    db = st.text_input("Enter a database name (any database in the server):")
     username = st.text_input("Enter the admin username:")
     password = st.text_input("Enter the admin password:", type="password")
-    submission = st.form_submit_button("Submit")
+    submission = st.form_submit_button("Submit and Run")
     if submission == True:
-        st.success("Successfully submitted")
-
-driver = 'SQL Server'
-st.write("Only select this button if you have submitted the above form:")
-if st.button("Make Student Databases/Logins", on_click=callback) or st.session_state.button_clicked:
-
-    # make each name lower case and remove spaces
-    roster = pd.read_csv(class_roster)
-    names = np.array(roster["Name"])
-    names_lst = []
-    for name in names:
-        x = name.replace(" ", "").lower()
-        names_lst.append(x)
-
-    # connect to the server
-    conn = pyodbc.connect('driver={%s};server=%s;database=%s;uid=%s;pwd=%s' % (
-        driver, server, db, username, password), autocommit=True)
-
-    # for each student, create a database and create a login
-    successfull_additions = []
-    for student in names_lst:
-        cursor = conn.cursor()
         try:
-            cursor.execute("CREATE DATABASE " + student)
+            roster = pd.read_csv(class_roster)
         except:
-            st.write("Database already exists for " + student)
-            continue
-        cursor.execute("CREATE LOGIN " + student +
-                       " WITH PASSWORD = 'database', CHECK_POLICY = OFF, DEFAULT_DATABASE = " + student)
+            st.error(
+                "Error: Please attach the Class Roster csv file. This can be downloaded from Canvas.")
+            st.stop()
+        names = np.array(roster["Name"])
+        names_lst = []
+        for name in names:
+            x = name.replace(" ", "").lower()
+            names_lst.append(x)
 
-        cursor.execute("USE [" + student + "]CREATE USER " +
-                       student + " FOR LOGIN " + student)
-        cursor.execute(
-            "USE [" + student + "] ALTER ROLE db_owner ADD MEMBER " + student)
-        successfull_additions.append(student)
+        if server == "":
+            st.warning("Please add a server name.")
+            st.stop()
 
-    if len(successfull_additions) == 0:
-        st.write("No students were added.")
-    else:
-        st.write(
-            "The following databases and logins were successfully added: \n" + successfull_additions)
+        if username == "":
+            st.warning("Please add the admin username.")
+            st.stop()
+
+        if password == "":
+            st.warning("Please add the admin password.")
+            st.stop()
+
+        # connect to the server
+        try:
+            conn = pyodbc.connect('driver={%s};server=%s;uid=%s;pwd=%s' % (
+                driver, server,  username, password), autocommit=True)
+        except:
+            st.error(
+                "Could not connect to SQL server. One or more of the form inputs is incorrect.")
+            st.stop()
+
+        # for each student, create a database and create a login
+        successfull_additions = []
+        for student in names_lst:
+            cursor = conn.cursor()
+            try:
+                cursor.execute("CREATE DATABASE " + student)
+            except:
+                st.write("Database already exists for " + student)
+                continue
+            cursor.execute("CREATE LOGIN " + student +
+                           " WITH PASSWORD = 'database', CHECK_POLICY = OFF, DEFAULT_DATABASE = " + student)
+
+            cursor.execute("USE [" + student + "]CREATE USER " +
+                           student + " FOR LOGIN " + student)
+            cursor.execute(
+                "USE [" + student + "] ALTER ROLE db_owner ADD MEMBER " + student)
+            successfull_additions.append(student)
+        st.success("Successfully submitted")
+        if len(successfull_additions) == 0:
+            st.warning("Result: No students were added.")
+        else:
+            st.subheader(
+                "Result - The following databases and logins were successfully created:")
+            for i in successfull_additions:
+                st.success("\t" + str(i))
