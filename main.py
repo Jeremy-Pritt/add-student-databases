@@ -20,10 +20,10 @@ with tab_roster:
     with form_roster:
         # get user parameters parameters to connect to SQL Server
         st.write(
-            "You can get the Class Roster csv file by going to Canvas Course -> People -> Download Course Roster.")
+            "Course Roster:")
         class_roster = st.file_uploader(
-            "Upload the course roster csv file:")
-        st.write("Enter admin login information here:")
+            "Upload the course roster csv file (Canvas -> People -> Download Course Roster) :")
+        st.write("Admin Login:")
         server = st.text_input("Enter the server name:")
         username = st.text_input("Enter the admin username:")
         password = st.text_input("Enter the admin password:", type="password")
@@ -93,11 +93,11 @@ with tab_individual:
     form_individual = st.form("Individual Form")
     with form_individual:
         # get user parameters parameters to connect to SQL Server
-        st.write("Enter student information here:")
+        st.write("Student Information:")
 
         student_name = st.text_input(
             "Input full student name:")
-        st.write("Enter admin login information here:")
+        st.write("Admin Login:")
         server = st.text_input("Enter the server name:")
         username = st.text_input("Enter the admin username:")
         password = st.text_input("Enter the admin password:", type="password")
