@@ -60,8 +60,8 @@ with tab_roster:
 
             # connect to the server
             try:
-                conn = pyodbc.connect('DRIVER={%s};SERVER=%s;UID=%s;PWD=%s' % (
-                    driver, server, username, password), autocommit=True)
+                conn = pyodbc.connect('DRIVER={%s};SERVER=%s;ENCRYPT=no;UID=%s;PWD=%s' % (
+                    driver, server, username, password))
             except:
                 st.error(
                     "Could not connect to SQL server. One or more of the form inputs is incorrect.")
@@ -128,8 +128,8 @@ with tab_individual:
 
             # connect to the server
             try:
-                conn = pyodbc.connect('DRIVER={%s};SERVER=%s;UID=%s;PWD=%s' % (
-                    driver, server, username, password), autocommit=True)
+                conn = pyodbc.connect('DRIVER={%s};SERVER=%s;ENCRYPT=no;UID=%s;PWD=%s' % (
+                    driver, server, username, password))
             except:
                 st.error(
                     "Could not connect to SQL server. One or more of the form inputs is incorrect.")
